@@ -30,8 +30,6 @@ You will need to list a set of endpoints you want to test connectivity from insi
 
 You can get the database endpoint at  OutSystems's configuration tool. Under the Platform tab, you will see a  *Server* input, copy this value. The database port is usually 1433. The controller endpoint is on the Controller tab. There you will see *Deployment Controller Server* and *Deployment Controller Service Port*.
 
-![Configuration Tool](https://www.outsystems.com/PortalTheme/NewOSLogoRed.svg)
-
 ### Running the script
 
 To run the script in a powershell do
@@ -47,11 +45,11 @@ You can see an example bellow
 ```
 
 * &lt;containerId&gt;
-⋅⋅* The Id of the container we want to collect information from
+The Id of the container we want to collect information from
 * &lt;siteName&gt;
-⋅⋅* The name of the site configured at the IIS
+The name of the site configured at the IIS
 * &lt;host:port[]&gt;
-⋅⋅* A list of tuples of hostname:port. The script will test the connectivety to this hosts from inside the container.
+A list of tuples of hostname:port. The script will test the connectivety to this hosts from inside the container.
 
 ## Change the scripts
 
