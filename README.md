@@ -14,19 +14,19 @@ First create a folder and download the file [CollectInfo](CollectInfo.ps1) or al
 
 Now you will need to gather information to run the script.
 
-You will need to the ID of the container we want to troubleshoot. We will refer to it as *<containerId>*. To do this at a powershell run
+You will need to the ID of the container we want to troubleshoot. We will refer to it as *&lt;containerId&gt;*. To do this at a powershell run
 
 ```
 docker ps -a
 ```
 
-Next, you will need the name of the site bonded to the container. We will refer to it as *<siteName>*. To do this at a powershell run
+Next, you will need the name of the site bonded to the container. We will refer to it as *&lt;siteName&gt;*. To do this at a powershell run
 
 ```
 get-website
 ```
 
-You will need to list a set of endpoints you want to test connectivity from inside the container. We will refer to it as *<host:port[]>*. Include in this list at least the endpoint of the database and the endpoint of the controller. If you have integrations in your application, it's a good idea to test them also.
+You will need to list a set of endpoints you want to test connectivity from inside the container. We will refer to it as *&lt;host:port[]&gt;*. Include in this list at least the endpoint of the database and the endpoint of the controller. If you have integrations in your application, it's a good idea to test them also.
 
 You can get the database endpoint at  OutSystems's configuration tool. Under the Platform tab, you will see a  *Server* input, copy this value. The database port is usually 1433. The controller endpoint is on the Controller tab. There you will see *Deployment Controller Server* and *Deployment Controller Service Port*.
 
@@ -46,12 +46,12 @@ You can see an example bellow
 .\CollectInfo.ps1 -ContainerId 40f93371dbfa -SiteName "Default Web Site" -Hosts dbserver.outsystems.net:1433,controllerserver.outsystems.net:12000
 ```
 
-* <containerId>
-** The Id of the container we want to collect information from
-* <siteName>
-** The name of the site configured at the IIS
-* <host:port[]>
-** A list of tuples of hostname:port. The script will test the connectivety to this hosts from inside the container.
+* &lt;containerId&gt;
+⋅⋅* The Id of the container we want to collect information from
+* &lt;siteName&gt;
+⋅⋅* The name of the site configured at the IIS
+* &lt;host:port[]&gt;
+⋅⋅* A list of tuples of hostname:port. The script will test the connectivety to this hosts from inside the container.
 
 ## Change the scripts
 
