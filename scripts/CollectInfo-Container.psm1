@@ -3,6 +3,60 @@ $ContainerLogFileDestination = "Container"
 $IISLogFilesDirectory = "IISLogFiles"
 $ContainerErrorFile = "CollectInfo-Container.err"
 
+function ConvertTo-EncodedCommand {
+    param(
+        [Parameter(mandatory=$true)][String]$Command
+    )
+    
+    $Bytes = [System.Text.Encoding]::Unicode.GetBytes($Command)
+    return [Convert]::ToBase64String($Bytes)
+}
+
+function Enable-ContainerHwcAccessLogs {
+    param(
+        [Parameter(mandatory=$true)][String]$ContainerId
+    )
+
+    $Command =
+@'
+    $xml = [xml](Get-Content C:\Users\ContainerAdministrator\tmp\config\ApplicationHost.config)
+    $xml.configuration.'system.webServer'.httpLogging[0].SetAttribute('dontLog', 'false')
+    $xml.Save('C:\Users\ContainerAdministrator\tmp\config\ApplicationHost.config')
+'@
+
+    $EncodedCommand = ConvertTo-EncodedCommand $Command
+
+    Start-Process -NoNewWindow `
+                  -Wait `
+                  -FilePath docker.exe `
+                  -ArgumentList "exec", $ContainerId, "powershell", "-encodedCommand", $EncodedCommand `
+                  -RedirectStandardError .\$ContainerErrorFile `
+                  -RedirectStandardOutput .\EventLog$ContainerId.out
+    
+}
+
+function Disable-ContainerHwcAccessLogs {
+    param(
+        [Parameter(mandatory=$true)][String]$ContainerId
+    )
+
+    $Command =
+@'
+    $xml = [xml](Get-Content C:\Users\ContainerAdministrator\tmp\config\ApplicationHost.config)
+    $xml.configuration.'system.webServer'.httpLogging[0].SetAttribute('dontLog', 'true')
+    $xml.Save('C:\Users\ContainerAdministrator\tmp\config\ApplicationHost.config')
+'@
+
+    $EncodedCommand = ConvertTo-EncodedCommand $Command
+
+    Start-Process -NoNewWindow `
+                  -Wait `
+                  -FilePath docker.exe `
+                  -ArgumentList "exec", $ContainerId, "powershell", "-encodedCommand", $EncodedCommand `
+                  -RedirectStandardError .\$ContainerErrorFile `
+                  -RedirectStandardOutput .\EventLog$ContainerId.out
+}
+
 function Get-ContainerEventLog {
     param(
         [Parameter(Mandatory=$true)][String]$ContainerId
@@ -18,8 +72,8 @@ function Get-ContainerEventLog {
     $Command = $Command + "    Write-Output 'Message:'`n"
     $Command = $Command + "    Write-Output `$entry.Message`n"
     $Command = $Command + "}"
-    $Bytes = [System.Text.Encoding]::Unicode.GetBytes($Command)
-    $EncodedCommand = [Convert]::ToBase64String($Bytes)
+    
+    $EncodedCommand = ConvertTo-EncodedCommand $Command
 
     Start-Process -NoNewWindow `
                   -Wait `
@@ -40,8 +94,8 @@ function Test-ContainerConnection {
         $Hostname, $Port = $hst.Split(":")
         $Command = $Command + "`n" + "Test-NetConnection -ComputerName $Hostname -Port $Port"
     }
-    $Bytes = [System.Text.Encoding]::Unicode.GetBytes($Command)
-    $EncodedCommand = [Convert]::ToBase64String($Bytes)
+    
+    $EncodedCommand = ConvertTo-EncodedCommand $Command
 
     Start-Process -NoNewWindow `
                   -Wait `
@@ -66,8 +120,8 @@ function Get-ApplicationConfiguration {
     # Get the Application Scheduler appSettings.config
     $Command = $Command + "Write-Output 'C:\bin\ApplicationScheduler\appSettings.config'`n"
     $Command = $Command + "Get-Content C:\bin\ApplicationScheduler\appSettings.config"
-    $Bytes = [System.Text.Encoding]::Unicode.GetBytes($Command)
-    $EncodedCommand = [Convert]::ToBase64String($Bytes)
+
+    $EncodedCommand = ConvertTo-EncodedCommand $Command
 
     Start-Process -NoNewWindow `
                   -Wait `
@@ -83,8 +137,7 @@ function Get-ContainerProcesses {
     )
 
     $Command = "Get-Process"
-    $Bytes = [System.Text.Encoding]::Unicode.GetBytes($Command)
-    $EncodedCommand = [Convert]::ToBase64String($Bytes)
+    $EncodedCommand = ConvertTo-EncodedCommand $Command
 
     Start-Process -NoNewWindow `
                   -Wait `
@@ -94,17 +147,18 @@ function Get-ContainerProcesses {
                   -RedirectStandardOutput .\ContainerProcesses$ContainerId.out
 }
 
-function Get-IISAccessLogs {
+
+function Get-ContainerHwcAccessLogs {
     param(
         [Parameter(mandatory=$true)][String]$ContainerId,
         [Parameter(mandatory=$true)][String]$LogPath
     )
 
     Start-Process -NoNewWindow `
-                  -Wait `
-                  -FilePath docker.exe `
-                  -ArgumentList "cp", "$($ContainerId):C:\inetpub\logs\LogFiles\W3SVC1", $LogPath `
-                  -RedirectStandardError .\$ContainerErrorFile
+                    -Wait `
+                    -FilePath docker.exe `
+                    -ArgumentList "cp", "$($ContainerId):C:\Users\ContainerAdministrator\tmp\LogFiles", $LogPath `
+                    -RedirectStandardError .\$ContainerErrorFile
 }
 
 function Get-ContainerInfo{
@@ -139,8 +193,8 @@ function Get-ContainerInfo{
         Test-ContainerConnection -ContainerId $ContainerId -Hosts $Hosts
     }
 
-    Write-Host "   Get IIS access logs"
-    Get-IISAccessLogs -ContainerId $ContainerId -LogPath $IISLogFiles
+    Write-Host "   Get Hwc access logs"
+    Get-ContainerHwcAccessLogs -ContainerId $ContainerId -LogPath $IISLogFiles
 
     Set-Location .\..
 }
